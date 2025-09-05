@@ -1,0 +1,279 @@
+# TRAT System Troubleshooting Guide
+
+This guide helps you resolve common issues with the Digital TRAT System.
+
+## 🔧 Setup Issues
+
+### Error: "Cannot read properties of null (reading 'getDataRange')"
+
+**Cause**: The script cannot access your spreadsheet or find the required sheets.
+
+**Solutions**:
+1. **Check Spreadsheet ID**:
+   - Verify you copied the correct ID from your spreadsheet URL
+   - URL format: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID_HERE/edit#gid=0`
+   - Copy only the long string between `/d/` and `/edit`
+
+2. **Verify Sheet Names**:
+   - First sheet must be named exactly: `TRAT_Library`
+   - Second sheet must be named exactly: `Results`
+   - Names are case-sensitive
+
+3. **Check Sharing Permissions**:
+   - Spreadsheet must be shared as "Anyone with the link"
+   - Permission level must be "Editor"
+   - Not "Viewer" or "Commenter"
+
+### Error: "Script function not found"
+
+**Cause**: The Apps Script functions are not properly saved or deployed.
+
+**Solutions**:
+1. **Verify Code is Saved**:
+   - Ensure both `backend.js` and `index.html` are saved in Apps Script
+   - The HTML file must be named exactly "index"
+
+2. **Re-deploy the Web App**:
+   - In Apps Script: Deploy → New deployment
+   - Type: Web app
+   - Execute as: Me
+   - Who has access: Anyone
+
+### Authorization Issues
+
+**Problem**: Students see permission errors when accessing the TRAT.
+
+**Solutions**:
+1. **Check Deployment Settings**:
+   - Web app must be deployed with "Anyone" access
+   - Should not require sign-in
+
+2. **Re-authorize the Script**:
+   - In Apps Script, run the `testConnection` function
+   - Complete the authorization process
+   - Re-deploy after authorization
+
+## 📝 Question Loading Issues
+
+### Error: "No questions found for TRAT code"
+
+**Cause**: Questions are not properly formatted or TRAT ID doesn't match.
+
+**Solutions**:
+1. **Check TRAT_ID Column**:
+   - Verify the TRAT_ID in column A matches exactly what students enter
+   - IDs are case-sensitive: "Test1" ≠ "test1"
+
+2. **Verify Question Format**:
+   ```
+   Column A: TRAT_ID (e.g., "midterm1")
+   Column B: Question_Number (1, 2, 3, etc.)
+   Column C: Question_Text
+   Column D: Option_A
+   Column E: Option_B
+   Column F: Option_C
+   Column G: Option_D
+   Column H: Correct_Answer (A, B, C, or D)
+   ```
+
+3. **Check for Empty Rows**:
+   - Remove any empty rows between questions
+   - Ensure no spaces before/after TRAT_ID values
+
+### Questions Loading in Wrong Order
+
+**Problem**: Questions appear out of sequence.
+
+**Solution**:
+- Ensure Question_Number column (B) has sequential numbers: 1, 2, 3, etc.
+- Questions are automatically sorted by question number
+
+## 💾 Results Not Saving
+
+### Error: Results don't appear in spreadsheet
+
+**Causes and Solutions**:
+
+1. **Check Results Sheet Structure**:
+   - Sheet must be named exactly "Results"
+   - Must have proper column headers in row 1
+   - Headers: Timestamp, Student_Name, TRAT_ID, Total_Points, Q1_Points, Q2_Points, etc.
+
+2. **Verify Permissions**:
+   - Spreadsheet must have "Editor" permissions
+   - "Viewer" or "Commenter" won't allow writing
+
+3. **Check for Script Errors**:
+   - In Apps Script: View → Logs
+   - Look for error messages in the execution log
+
+### Partial Results Saving
+
+**Problem**: Some data saves but not all columns.
+
+**Solution**:
+- Ensure Results sheet has enough columns (at least 22 for 18 questions)
+- Add more Q##_Points columns if you have more than 18 questions
+
+## 🌐 Student Access Issues
+
+### Students Can't Access the TRAT
+
+**Common Causes**:
+
+1. **Incorrect URL**:
+   - Ensure you're sharing the correct web app URL
+   - URL should end with `/exec`, not `/edit`
+
+2. **Browser Issues**:
+   - Have students try a different browser
+   - Clear browser cache and cookies
+   - Disable browser extensions that might block scripts
+
+3. **Network Restrictions**:
+   - Some institutional networks block Google Apps Script
+   - Have students try from a different network
+
+### TRAT Loads but Doesn't Function
+
+**Solutions**:
+
+1. **JavaScript Disabled**:
+   - Students must have JavaScript enabled
+   - Check browser settings
+
+2. **Old Browser**:
+   - Ensure students use a modern browser (Chrome, Firefox, Safari, Edge)
+   - Internet Explorer is not supported
+
+## 🔍 Debugging Tools
+
+### Using the Test Functions
+
+1. **Test Connection**:
+   ```javascript
+   // In Apps Script, run this function to verify setup
+   testConnection()
+   ```
+   - Check execution logs for results
+   - Should show successful connection and list of sheets
+
+2. **Debug TRAT**:
+   ```javascript
+   // Test specific TRAT loading
+   debugTRAT("your_trat_id")
+   ```
+   - Shows available TRAT IDs
+   - Counts questions for specific TRAT
+
+### Browser Console Debugging
+
+1. **Open Browser Developer Tools**:
+   - Chrome/Edge: F12 or Ctrl+Shift+I
+   - Firefox: F12 or Ctrl+Shift+K
+   - Safari: Cmd+Option+I
+
+2. **Check Console Tab**:
+   - Look for JavaScript errors in red
+   - Network tab shows if requests are failing
+
+### Common Console Errors
+
+**"google.script.run is not defined"**:
+- TRAT is being accessed outside of Google Apps Script environment
+- Ensure using the correct web app URL
+
+**"Mixed Content" errors**:
+- Usually caused by accessing HTTP resources from HTTPS page
+- All resources should use HTTPS
+
+## 📊 Data Issues
+
+### Wrong Question Scores
+
+**Problem**: Points don't match expected TRAT scoring (4→2→1→0).
+
+**Check**:
+1. **Scoring Logic**:
+   - First attempt: 4 points
+   - Second attempt: 2 points
+   - Third attempt: 1 point
+   - Fourth attempt: 0 points
+
+2. **Correct Answer Format**:
+   - Must be exactly "A", "B", "C", or "D"
+   - Not "a", "option A", "1", etc.
+
+### Missing Student Results
+
+**Possible Causes**:
+1. **Student didn't complete quiz**: Check if they reached the results screen
+2. **Network interruption**: Student lost connection before saving
+3. **Script timeout**: For very long quizzes, increase timeout settings
+
+## 🚀 Performance Issues
+
+### Slow Loading
+
+**Solutions**:
+1. **Reduce Question Count**: Large TRATs (>20 questions) may load slowly
+2. **Optimize Spreadsheet**: Remove unnecessary formatting or formulas
+3. **Check Internet Connection**: Slow connections affect performance
+
+### Timeout Errors
+
+**For Large TRATs**:
+1. **Split into Multiple Parts**: Consider breaking very long assessments
+2. **Simplify Questions**: Reduce length of question text and options
+3. **Clear Browser Cache**: Old cached data can cause conflicts
+
+## 📞 Getting Additional Help
+
+### Before Asking for Help
+
+1. **Check this troubleshooting guide**
+2. **Review setup instructions** step-by-step
+3. **Test with sample data** (use "test1" TRAT ID)
+4. **Check browser console** for error messages
+
+### Information to Include When Reporting Issues
+
+1. **Exact error message** (copy/paste, don't paraphrase)
+2. **Steps to reproduce** the problem
+3. **Browser and version** being used
+4. **Whether it works with sample data**
+5. **Screenshot** of the error (if applicable)
+
+### Resources
+
+- **Google Apps Script Documentation**: [script.google.com](https://script.google.com)
+- **Google Sheets Help**: [support.google.com/docs/topic/9054603](https://support.google.com/docs/topic/9054603)
+- **Browser Developer Tools**: Search "[browser name] developer tools tutorial"
+
+## 🔄 Recovery Procedures
+
+### Completely Reset System
+
+If everything breaks and you need to start over:
+
+1. **Create new spreadsheet** with fresh structure
+2. **Create new Apps Script project**
+3. **Copy code again** from repository
+4. **Update spreadsheet ID** in code
+5. **Re-deploy** web app
+6. **Test with sample data** before production use
+
+### Backup Your Work
+
+**Regular Backups**:
+1. **Download spreadsheet** as Excel file
+2. **Copy Apps Script code** to local files
+3. **Document your TRAT IDs** and URLs
+4. **Save deployment URLs** in safe location
+
+**Before Major Changes**:
+- Always test changes with sample data first
+- Keep backup copies of working versions
+- Document what changes you made
+
+Remember: The TRAT system is designed to be robust, but like all technology, issues can occur. Most problems have simple solutions once you identify the root cause.
