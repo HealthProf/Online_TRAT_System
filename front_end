@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Readiness Assessment Test (TRAT)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #4a5568;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .setup-screen, .quiz-screen, .results-screen {
+            text-align: center;
+        }
+
+        .setup-screen h2 {
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #667eea;
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .question-container {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            color: #2d3748;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .option {
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+            transform: translateX(5px);
+        }
+
+        .option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f5f9;
+            transform: none;
+        }
+
+        .option.disabled:hover {
+            border-color: #e2e8f0;
+            background: #f1f5f9;
+            transform: none;
+        }
+
+        .option-letter {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .feedback {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #9ae6b4;
+        }
+
+        .feedback.incorrect {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #fc8181;
+        }
+
+        .score-display {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .score-display h3 {
+            margin-bottom: 10px;
+        }
+
+        .results-screen h2 {
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+
+        .final-score {
+            font-size: 3em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #fc8181;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .question-text {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 TRAT</h1>
+            <p>Team Readiness Assessment Test</p>
+        </div>
+        
+        <div class="content">
+            <!-- Setup Screen -->
+            <div id="setupScreen" class="setup-screen">
+                <h2>Welcome to the TRAT</h2>
+                <p style="margin-bottom: 30px; color: #718096;">Enter your information to begin the assessment.</p>
+                
+                <div class="form-group">
+                    <label for="studentName">Your Name:</label>
+                    <input type="text" id="studentName" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tratCode">TRAT Code:</label>
+                    <input type="text" id="tratCode" placeholder="Enter the TRAT code provided by your instructor" required>
+                </div>
+                
+                <button class="btn" onclick="startQuiz()">Start TRAT</button>
+                
+                <div id="loadingDiv" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Loading your TRAT...</p>
+                </div>
+                
+                <div id="errorDiv" class="error" style="display: none;"></div>
+            </div>
+            
+            <!-- Quiz Screen -->
+            <div id="quizScreen" class="quiz-screen" style="display: none;">
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                </div>
+                
+                <div class="question-container">
+                    <div id="questionNumber" class="question-number"></div>
+                    <div id="questionText" class="question-text"></div>
+                    
+                    <div id="options" class="options"></div>
+                    
+                    <div id="feedback" class="feedback" style="display: none;"></div>
+                    
+                    <div class="score-display">
+                        <h3>Current Question Points Available: <span id="currentPoints">4</span></h3>
+                        <h3>Total Score: <span id="totalScore">0</span></h3>
+                    </div>
+                </div>
+                
+                <button id="nextButton" class="btn" style="display: none;" onclick="nextQuestion()">Next Question</button>
+                <button id="finishButton" class="btn" style="display: none;" onclick="finishQuiz()">Finish TRAT</button>
+            </div>
+            
+            <!-- Results Screen -->
+            <div id="resultsScreen" class="results-screen" style="display: none;">
+                <h2>🎉 TRAT Complete!</h2>
+                <p style="margin-bottom: 20px;">Great job completing the assessment!</p>
+                
+                <div class="final-score" id="finalScore">0</div>
+                <p style="margin-bottom: 30px;">out of <span id="maxPossible">0</span> possible points</p>
+                
+                <div id="resultsSummary" style="text-align: left; background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;"></div>
+                
+                <p style="color: #718096;">Your results have been automatically saved. You may now close this window.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for quiz state
+        let currentQuiz = null;
+        let currentQuestionIndex = 0;
+        let currentAttempt = 1;
+        let totalScore = 0;
+        let questionScores = [];
+        let studentName = '';
+        let tratId = '';
+
+        /**
+         * Initialize the application when page loads
+         * Check for TRAT code in URL parameters
+         */
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tratParam = urlParams.get('trat');
+            if (tratParam) {
+                document.getElementById('tratCode').value = tratParam;
+            }
+        };
+
+        /**
+         * Start the quiz by validating input and loading questions
+         */
+        function startQuiz() {
+            studentName = document.getElementById('studentName').value.trim();
+            tratId = document.getElementById('tratCode').value.trim();
+            
+            if (!studentName || !tratId) {
+                showError('Please enter both your name and the TRAT code.');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // Call Google Apps Script function to get questions
+            google.script.run
+                .withSuccessHandler(onQuizLoaded)
+                .withFailureHandler(onQuizError)
+                .getTRATQuestions(tratId);
+        }
+
+        /**
+         * Handle successful quiz loading
+         * @param {Object} response - Response from backend with questions
+         */
+        function onQuizLoaded(response) {
+            showLoading(false);
+            
+            if (!response.success) {
+                showError('Error loading TRAT: ' + response.error);
+                return;
+            }
+            
+            if (!response.questions || response.questions.length === 0) {
+                showError('No questions found for TRAT code: ' + tratId + '. Please check the code and try again.');
+                return;
+            }
+            
+            // Initialize quiz state
+            currentQuiz = response.questions;
+            totalScore = 0;
+            questionScores = [];
+            currentQuestionIndex = 0;
+            
+            // Initialize question scores array
+            for (let i = 0; i < currentQuiz.length; i++) {
+                questionScores.push(0);
+            }
+            
+            showScreen('quiz');
+            displayQuestion();
+        }
+
+        /**
+         * Handle quiz loading error
+         * @param {Error} error - Error from backend
+         */
+        function onQuizError(error) {
+            showLoading(false);
+            showError('Failed to load TRAT. Please check your internet connection and try again. Error: ' + error);
+        }
+
+        /**
+         * Display the current question and options
+         */
+        function displayQuestion() {
+            const question = currentQuiz[currentQuestionIndex];
+            currentAttempt = 1;
+            
+            // Update progress bar
+            const progress = ((currentQuestionIndex + 1) / currentQuiz.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Display question information
+            document.getElementById('questionNumber').textContent = `Question ${currentQuestionIndex + 1} of ${currentQuiz.length}`;
+            document.getElementById('questionText').textContent = question.questionText;
+            
+            // Create answer options
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            const options = ['A', 'B', 'C', 'D'];
+            const optionTexts = [question.optionA, question.optionB, question.optionC, question.optionD];
+            
+            options.forEach((letter, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.onclick = () => selectOption(letter);
+                optionDiv.innerHTML = `
+                    <span class="option-letter">${letter}.</span>
+                    <span>${optionTexts[index]}</span>
+                `;
+                optionDiv.setAttribute('data-option', letter);
+                optionsDiv.appendChild(optionDiv);
+            });
+            
+            // Update score display
+            updateScoreDisplay();
+            
+            // Hide feedback and navigation buttons
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('nextButton').style.display = 'none';
+            document.getElementById('finishButton').style.display = 'none';
+        }
+
+        /**
+         * Handle option selection and implement TRAT scoring logic
+         * @param {string} selectedOption - The selected option (A, B, C, or D)
+         */
+        function selectOption(selectedOption) {
+            const question = currentQuiz[currentQuestionIndex];
+            const isCorrect = selectedOption === question.correctAnswer;
+            
+            // Disable the selected option
+            const optionElement = document.querySelector(`[data-option="${selectedOption}"]`);
+            optionElement.classList.add('disabled');
+            optionElement.onclick = null;
+            
+            if (isCorrect) {
+                // Award points based on attempt number
+                const points = getPointsForAttempt(currentAttempt);
+                questionScores[currentQuestionIndex] = points;
+                totalScore += points;
+                
+                showFeedback(true, `Correct! You earned ${points} points.`);
+                
+                // Show appropriate navigation button
+                if (currentQuestionIndex < currentQuiz.length - 1) {
+                    document.getElementById('nextButton').style.display = 'inline-block';
+                } else {
+                    document.getElementById('finishButton').style.display = 'inline-block';
+                }
+            } else {
+                showFeedback(false, 'Incorrect. Try again with the remaining options.');
+                currentAttempt++;
+                
+                // Check if all attempts have been used
+                if (currentAttempt > 4) {
+                    questionScores[currentQuestionIndex] = 0;
+                    showFeedback(false, 'No more attempts available. You earned 0 points for this question.');
+                    
+                    // Show navigation button since question is complete
+                    if (currentQuestionIndex < currentQuiz.length - 1) {
+                        document.getElementById('nextButton').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('finishButton').style.display = 'inline-block';
+                    }
+                }
+            }
+            
+            updateScoreDisplay();
+        }
+
+        /**
+         * Get points based on attempt number (TRAT scoring: 4→2→1→0)
+         * @param {number} attempt - Current attempt number (1-4)
+         * @returns {number} Points earned for this attempt
+         */
+        function getPointsForAttempt(attempt) {
+            switch(attempt) {
+                case 1: return 4;
+                case 2: return 2;
+                case 3: return 1;
+                case 4: return 0;
+                default: return 0;
+            }
+        }
+
+        /**
+         * Display feedback to the student
+         * @param {boolean} isCorrect - Whether the answer was correct
+         * @param {string} message - Feedback message to display
+         */
+        function showFeedback(isCorrect, message) {
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackDiv.textContent = message;
+            feedbackDiv.style.display = 'block';
+        }
+
+        /**
+         * Update the score display with current points available and total score
+         */
+        function updateScoreDisplay() {
+            document.getElementById('currentPoints').textContent = getPointsForAttempt(currentAttempt);
+            document.getElementById('totalScore').textContent = totalScore;
+        }
+
+        /**
+         * Move to the next question
+         */
+        function nextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        /**
+         * Finish the quiz and show results
+         */
+        function finishQuiz() {
+            const maxPossible = currentQuiz.length * 4;
+            
+            // Prepare result data for backend
+            const resultData = {
+                studentName: studentName,
+                tratId: tratId,
+                totalPoints: totalScore,
+                questionPoints: questionScores
+            };
+            
+            // Save results to Google Sheets
+            google.script.run
+                .withSuccessHandler(onResultsSaved)
+                .withFailureHandler(onResultsError)
+                .saveResults(resultData);
+            
+            // Display results to student
+            document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('maxPossible').textContent = maxPossible;
+            
+            // Create detailed results summary
+            const summaryDiv = document.getElementById('resultsSummary');
+            let summaryHTML = '<h3>Question-by-Question Results:</h3>';
+            for (let i = 0; i < currentQuiz.length; i++) {
+                summaryHTML += `<p>Question ${i + 1}: ${questionScores[i]} points</p>`;
+            }
+            summaryDiv.innerHTML = summaryHTML;
+            
+            showScreen('results');
+        }
+
+        /**
+         * Handle successful results saving
+         * @param {Object} response - Response from backend
+         */
+        function onResultsSaved(response) {
+            if (!response.success) {
+                console.error('Error saving results:', response.error);
+            }
+        }
+
+        /**
+         * Handle results saving error
+         * @param {Error} error - Error from backend
+         */
+        function onResultsError(error) {
+            console.error('Failed to save results:', error);
+        }
+
+        /**
+         * Show/hide different screens
+         * @param {string} screenName - Name of screen to show (setup, quiz, results)
+         */
+        function showScreen(screenName) {
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'none';
+            document.getElementById('resultsScreen').style.display = 'none';
+            
+            document.getElementById(screenName + 'Screen').style.display = 'block';
+        }
+
+        /**
+         * Show/hide loading spinner
+         * @param {boolean} show - Whether to show loading spinner
+         */
+        function showLoading(show) {
+            document.getElementById('loadingDiv').style.display = show ? 'block' : 'none';
+        }
+
+        /**
+         * Display error message to user
+         * @param {string} message - Error message to display
+         */
+        function showError(message) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
