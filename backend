@@ -1,0 +1,195 @@
+// TRAT System - Google Apps Script Backend
+// 
+// Instructions:
+// 1. Replace 'YOUR_SPREADSHEET_ID' with your actual Google Sheets spreadsheet ID
+// 2. Save this code in your Google Apps Script project
+// 3. Deploy as a web app with "Anyone" access
+//
+// Spreadsheet ID can be found in your Google Sheets URL:
+// https://docs.google.com/spreadsheets/d/SPREADSHEET_ID_HERE/edit#gid=0
+
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // Replace with your actual spreadsheet ID
+
+/**
+ * Serves the HTML file when the web app is accessed
+ */
+function doGet(e) {
+  return HtmlService.createHtmlOutputFromFile('index')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Retrieves questions for a specific TRAT from the spreadsheet
+ * @param {string} tratId - The unique identifier for the TRAT
+ * @returns {Object} Response object with success status and questions array
+ */
+function getTRATQuestions(tratId) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const librarySheet = ss.getSheetByName('TRAT_Library');
+    
+    if (!librarySheet) {
+      throw new Error('TRAT_Library sheet not found. Please check sheet name.');
+    }
+    
+    const data = librarySheet.getDataRange().getValues();
+    
+    // Filter questions for the specific TRAT
+    const questions = [];
+    for (let i = 1; i < data.length; i++) { // Start from 1 to skip headers
+      if (data[i][0] === tratId) { // Column A is TRAT_ID
+        questions.push({
+          questionNumber: data[i][1],    // Column B
+          questionText: data[i][2],      // Column C
+          optionA: data[i][3],           // Column D
+          optionB: data[i][4],           // Column E
+          optionC: data[i][5],           // Column F
+          optionD: data[i][6],           // Column G
+          correctAnswer: data[i][7]      // Column H
+        });
+      }
+    }
+    
+    // Sort by question number to ensure proper order
+    questions.sort((a, b) => a.questionNumber - b.questionNumber);
+    
+    return {
+      success: true,
+      questions: questions,
+      tratId: tratId
+    };
+  } catch (error) {
+    console.error('Error in getTRATQuestions:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Saves student results to the Results sheet
+ * @param {Object} resultData - Object containing student results
+ * @returns {Object} Response object with success status
+ */
+function saveResults(resultData) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const resultsSheet = ss.getSheetByName('Results');
+    
+    if (!resultsSheet) {
+      throw new Error('Results sheet not found. Please check sheet name.');
+    }
+    
+    // Prepare the row data
+    const timestamp = new Date();
+    const row = [
+      timestamp,                    // Column A: Timestamp
+      resultData.studentName,       // Column B: Student_Name
+      resultData.tratId,           // Column C: TRAT_ID
+      resultData.totalPoints       // Column D: Total_Points
+    ];
+    
+    // Add individual question points (supports up to 18 questions)
+    for (let i = 0; i < 18; i++) {
+      if (i < resultData.questionPoints.length) {
+        row.push(resultData.questionPoints[i]);
+      } else {
+        row.push(''); // Empty cell if fewer than 18 questions
+      }
+    }
+    
+    // Append the row to the results sheet
+    resultsSheet.appendRow(row);
+    
+    console.log('Results saved successfully for:', resultData.studentName);
+    
+    return {
+      success: true,
+      message: 'Results saved successfully'
+    };
+  } catch (error) {
+    console.error('Error in saveResults:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Test function to verify connection to the spreadsheet
+ * Use this to troubleshoot setup issues
+ * @returns {Object} Response object with connection status
+ */
+function testConnection() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheets = ss.getSheets().map(sheet => sheet.getName());
+    
+    // Check for required sheets
+    const hasLibrary = sheets.includes('TRAT_Library');
+    const hasResults = sheets.includes('Results');
+    
+    return {
+      success: true,
+      message: 'Connection successful',
+      spreadsheetName: ss.getName(),
+      sheets: sheets,
+      hasRequiredSheets: hasLibrary && hasResults,
+      missingSheets: [
+        ...(hasLibrary ? [] : ['TRAT_Library']),
+        ...(hasResults ? [] : ['Results'])
+      ]
+    };
+  } catch (error) {
+    console.error('Error in testConnection:', error);
+    return {
+      success: false,
+      error: error.toString(),
+      possibleCauses: [
+        'Incorrect spreadsheet ID',
+        'Insufficient permissions',
+        'Spreadsheet not shared properly'
+      ]
+    };
+  }
+}
+
+/**
+ * Debug function to help troubleshoot TRAT loading issues
+ * @param {string} tratId - The TRAT ID to debug
+ * @returns {Object} Detailed debug information
+ */
+function debugTRAT(tratId) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const librarySheet = ss.getSheetByName('TRAT_Library');
+    const data = librarySheet.getDataRange().getValues();
+    
+    // Get all TRAT IDs in the sheet
+    const allTratIds = [];
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] && !allTratIds.includes(data[i][0])) {
+        allTratIds.push(data[i][0]);
+      }
+    }
+    
+    // Count questions for the requested TRAT
+    const questionCount = data.filter(row => row[0] === tratId).length;
+    
+    return {
+      success: true,
+      requestedTratId: tratId,
+      foundQuestions: questionCount,
+      allAvailableTratIds: allTratIds,
+      sampleData: data.slice(0, 3), // First 3 rows for debugging
+      totalRows: data.length
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
